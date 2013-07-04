@@ -1,0 +1,15 @@
+{
+  "name": "s-expression",
+  "version": "0.0.0",
+  "description": "s-expression parser with ' quote support",
+  "main": "index.js",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/fwg/s-expression.git"
+  },
+  "author": {
+      "name": "Friedemann Altrock",
+      "email": "frodenius@gmail.com"
+  },
+  "license": "MIT"
+}
