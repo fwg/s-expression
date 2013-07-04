@@ -9,8 +9,8 @@ array of the list-like expressions. Supports quoting with `'`.
     var Parser = require('s-expression');
 
     console.log(new Parser('()')); // []
-    console.log(new Parser('(a b c)'); // ['a', 'b', 'c']
-    console.log(new Parser('(a \'(b c))'); // ['a', ['quote', ['b', 'c']]]
+    console.log(new Parser('(a b c)')); // ['a', 'b', 'c']
+    console.log(new Parser('(a \'(b c))')); // ['a', ['quote', ['b', 'c']]]
 
 
 #### License
