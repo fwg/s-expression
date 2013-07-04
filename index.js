@@ -1,53 +1,33 @@
 var _line, _col, _pos, _stream;
-var not_whitespace = /^\S/;
+var not_whitespace_or_end = /^(\S|$)/;
 var whitespace_or_close = /^(\s|\)|$)/;
 
-function peek(n) {
+function peek() {
     if (_stream.length == _pos) return '';
-    if (n == 1) return _stream[_pos];
-    if (n == 2) return _stream[_pos] + _stream[_pos + 1];
-    return _stream.slice(_pos, n);
+    return _stream[_pos];
 }
 
-function consume(n) {
+function consume() {
     if (_stream.length == _pos) return '';
-    if (n == 1) {
-        n = _stream[_pos];
-        _pos += 1;
-        if (n == '\n' || n == '\r') {
-            _line++;
-            _col = 0;
-        } else {
-            _col++;
-        }
-        return n;
+
+    var c = _stream[_pos];
+    _pos += 1;
+
+    if (c == '\n' || c == '\r') {
+        _line++;
+        _col = 0;
+    } else {
+        _col++;
     }
 
-    var r = '';
-
-    while (n > 0) {
-        n--;
-        r += consume(1);
-    }
-
-    return n;
+    return c;
 }
 
-function until_r(regex) {
+function until(regex) {
     var s = '';
 
-    while (!regex.test(peek(1))) {
-        s += consume(1);
-    }
-
-    return s;
-}
-
-function while_r(regex) {
-    var s = '';
-    
-    while (regex.test(peek(1))) {
-        s += consume(1);
+    while (!regex.test(peek())) {
+        s += consume();
     }
 
     return s;
@@ -57,50 +37,48 @@ function error(msg) {
     var e = new Error(msg);
     e.line = _line;
     e.col  = _col;
+    return e;
 }
 
 function val() {
-    return until_r(whitespace_or_close);
+    return until(whitespace_or_close);
 }
 
 function valOrExpr() {
-    return peek(1) == '(' ? expr() : val();
+    return peek() == '(' ? expr() : val();
 }
 
 function expr() {
-    if (peek(1) != '(') {
-        return error('Syntax error: Expected `(` - saw `' + rest[0] + '` instead.');
+    if (peek() != '(') {
+        return error('Syntax error: Expected `(` - saw `' + peek() + '` instead.');
     }
 
-    consume(1);
-
-    if (peek(1) == '(') {
-        return error('Syntax error: Unexpected `(`.');
-    }
+    consume();
 
     // ignore whitespace
-    until_r(not_whitespace);
+    until(not_whitespace_or_end);
 
     var ls = [];
-    var v = val();
+    var v = valOrExpr();
 
-    if (v.length) {
+    if (v !== '') {
         ls.push(v);
 
-        until_r(not_whitespace); // <=> while whitespace
+        until(not_whitespace_or_end); // <=> while whitespace
 
-        while ((v = valOrExpr()) != "") {
+        while ((v = valOrExpr()) !== '') {
             if (v instanceof Error) return v;
             ls.push(v);
-            until_r(not_whitespace);
+            until(not_whitespace_or_end);
         }
     }
 
-    if (peek(1) != ')') {
-        return error('Syntax error: Expected `)` - saw: ' + peek(1));
+    if (peek() != ')') {
+        return error('Syntax error: Expected `)` - saw: `' + peek() + '`');
     }
 
-    consume(1);
+    // consume that closing paren
+    consume();
 
     return ls;
 }
@@ -111,5 +89,3 @@ module.exports = function (stream) {
     _stream = stream;
     return expr();
 }
-
-module.exports.val = val;
