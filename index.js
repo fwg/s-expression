@@ -1,5 +1,5 @@
 var not_whitespace_or_end = /^(\S|$)/;
-var whitespace_or_close = /^(\s|\)|$)/;
+var whitespace_or_paren = /^(\s|\(|\)|$)/;
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
@@ -12,15 +12,17 @@ SParser.prototype = {
     consume: consume,
     until: until,
     error: error,
-    val: val,
-    valOrExpr: valOrExpr,
+    atom: atom,
+    atomOrExpr: atomOrExpr,
     expr: expr
 };
 
 module.exports = SParser;
 
-function peek() {
+function peek(n) {
+    n = n || 1;
     if (this._stream.length == this._pos) return '';
+    if (n == 1) return this._stream[this._pos];
     return this._stream[this._pos];
 }
 
@@ -57,12 +59,17 @@ function error(msg) {
     return e;
 }
 
-function val() {
-    return this.until(whitespace_or_close);
+function atom() {
+    return this.until(whitespace_or_paren);
 }
 
-function valOrExpr() {
-    return this.peek() == '(' ? this.expr() : this.val();
+function atomOrExpr() {
+    if (this.peek() == '\'') {
+        this.consume();
+        return ['quote', this.atomOrExpr()];
+    }
+        
+    return this.peek() == '(' ? this.expr() : this.atom();
 }
 
 function expr() {
@@ -76,14 +83,14 @@ function expr() {
     this.until(not_whitespace_or_end);
 
     var ls = [];
-    var v = this.valOrExpr();
+    var v = this.atomOrExpr();
 
     if (v !== '') {
         ls.push(v);
 
         this.until(not_whitespace_or_end); // <=> while whitespace
 
-        while ((v = this.valOrExpr()) !== '') {
+        while ((v = this.atomOrExpr()) !== '') {
             if (v instanceof Error) return v;
             ls.push(v);
             this.until(not_whitespace_or_end);
