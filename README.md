@@ -10,7 +10,8 @@ array of the list-like expressions. Supports quoting with `'`.
 
     console.log(new Parser('()')); // []
     console.log(new Parser('(a b c)')); // ['a', 'b', 'c']
-    console.log(new Parser('(a \'(b c))')); // ['a', ['quote', ['b', 'c']]]
+    console.log(new Parser("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
+    console.log(new Parser("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
 
 
 #### License

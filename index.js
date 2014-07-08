@@ -12,7 +12,7 @@ function SParser(stream) {
 
     // if anything is left to parse, it's a syntax error
     if (this.peek() != '') {
-        return this.error('Syntax error: Superfluous characters after expression: `' + this.peek() + '`');
+        return this.error('Superfluous characters after expression: `' + this.peek() + '`');
     }
 
     return expression;
@@ -64,7 +64,7 @@ function until(regex) {
 }
 
 function error(msg) {
-    var e = new Error(msg);
+    var e = new Error('Syntax error: ' + msg);
     e.line = this._line;
     e.col  = this._col;
     return e;
@@ -77,15 +77,33 @@ function atom() {
 function atomOrExpr() {
     if (this.peek() == '\'') {
         this.consume();
-        return ['quote', this.atomOrExpr()];
+        // ignore whitespace
+        this.until(not_whitespace_or_end);
+        var quotedExpr = this.atomOrExpr();
+
+        if (quotedExpr instanceof Error) {
+            return quotedExpr;
+        }
+
+        if (quotedExpr instanceof Array) {
+            quotedExpr.unshift('quote');
+            return quotedExpr;
+        }
+
+        // nothing came after '
+        if (quotedExpr === '') {
+            return this.error('Unexpected `' + this.peek() + '` after `\'`');
+        }
+
+        return ['quote', quotedExpr];
     }
-        
+
     return this.peek() == '(' ? this.expr() : this.atom();
 }
 
 function expr() {
     if (this.peek() != '(') {
-        return this.error('Syntax error: Expected `(` - saw `' + this.peek() + '` instead.');
+        return this.error('Expected `(` - saw `' + this.peek() + '` instead.');
     }
 
     this.consume();
@@ -113,7 +131,7 @@ function expr() {
     }
 
     if (this.peek() != ')') {
-        return this.error('Syntax error: Expected `)` - saw: `' + this.peek() + '`');
+        return this.error('Expected `)` - saw: `' + this.peek() + '`');
     }
 
     // consume that closing paren
