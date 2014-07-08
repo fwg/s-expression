@@ -4,18 +4,6 @@ var whitespace_or_paren = /^(\s|\(|\)|$)/;
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
     this._stream = stream;
-    var expression = this.expr();
-
-    if (expression instanceof Error) {
-        return expression;
-    }
-
-    // if anything is left to parse, it's a syntax error
-    if (this.peek() != '') {
-        return this.error('Superfluous characters after expression: `' + this.peek() + '`');
-    }
-
-    return expression;
 }
 
 SParser.prototype = {
@@ -28,7 +16,21 @@ SParser.prototype = {
     expr: expr
 };
 
-module.exports = SParser;
+module.exports = function SParse(stream) {
+    var parser = new SParser(stream);
+    var expression = parser.atomOrExpr();
+
+    if (expression instanceof Error) {
+        return expression;
+    }
+
+    // if anything is left to parse, it's a syntax error
+    if (parser.peek() != '') {
+        return parser.error('Superfluous characters at end of input: `' + parser.peek() + '`');
+    }
+
+    return expression;
+};
 
 function peek(n) {
     n = n || 1;

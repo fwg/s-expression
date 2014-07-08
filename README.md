@@ -6,12 +6,14 @@ array of the list-like expressions. Supports quoting with `'`.
 
 ### Examples
 
-    var Parser = require('s-expression');
+    var Parse = require('s-expression');
 
-    console.log(new Parser('()')); // []
-    console.log(new Parser('(a b c)')); // ['a', 'b', 'c']
-    console.log(new Parser("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
-    console.log(new Parser("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
+    console.log(Parse('a')); // 'a'
+    console.log(Parse("'a")); // ['quote', 'a']
+    console.log(Parse('()')); // []
+    console.log(Parse('(a b c)')); // ['a', 'b', 'c']
+    console.log(Parse("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
+    console.log(Parse("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
 
 
 #### License
