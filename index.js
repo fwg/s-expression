@@ -4,7 +4,14 @@ var whitespace_or_paren = /^(\s|\(|\)|$)/;
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
     this._stream = stream;
-    return this.expr();
+    var expression = this.expr();
+
+    // if anything is left to parse, it's a syntax error
+    if (this.peek() != '') {
+        return this.error('Syntax error: Superfluous characters after expression: `' + this.peek() + '`');
+    }
+
+    return expression;
 }
 
 SParser.prototype = {

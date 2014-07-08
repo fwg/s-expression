@@ -17,7 +17,7 @@ array of the list-like expressions. Supports quoting with `'`.
 
 This software is licensed under MIT, see `LICENSE`.
 
-    (c) 2013 Friedemann Altrock 
+    (c) 2013,2014 Friedemann Altrock 
 
 
     
