@@ -6,6 +6,10 @@ function SParser(stream) {
     this._stream = stream;
     var expression = this.expr();
 
+    if (expression instanceof Error) {
+        return expression;
+    }
+
     // if anything is left to parse, it's a syntax error
     if (this.peek() != '') {
         return this.error('Syntax error: Superfluous characters after expression: `' + this.peek() + '`');
@@ -91,6 +95,10 @@ function expr() {
 
     var ls = [];
     var v = this.atomOrExpr();
+
+    if (v instanceof Error) {
+        return v;
+    }
 
     if (v !== '') {
         ls.push(v);
