@@ -1,5 +1,6 @@
 var not_whitespace_or_end = /^(\S|$)/;
 var whitespace_or_paren = /^(\s|\(|\)|$)/;
+var string_or_escaped_or_end = /^(\\|"|$)/;
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
@@ -11,14 +12,16 @@ SParser.prototype = {
     consume: consume,
     until: until,
     error: error,
+    string: string,
     atom: atom,
-    atomOrExpr: atomOrExpr,
-    expr: expr
+    quoted: quoted,
+    expr: expr,
+    list: list
 };
 
 module.exports = function SParse(stream) {
     var parser = new SParser(stream);
-    var expression = parser.atomOrExpr();
+    var expression = parser.expr();
 
     if (expression instanceof Error) {
         return expression;
@@ -26,7 +29,7 @@ module.exports = function SParse(stream) {
 
     // if anything is left to parse, it's a syntax error
     if (parser.peek() != '') {
-        return parser.error('Superfluous characters at end of input: `' + parser.peek() + '`');
+        return parser.error('Superfluous characters after expression: `' + parser.peek() + '`');
     }
 
     return expression;
@@ -77,49 +80,98 @@ function until(regex) {
     return s;
 }
 
+function string() {
+    // consume "
+    this.consume();
+
+    var str = '';
+
+    while (true) {
+        str += this.until(string_or_escaped_or_end);
+        var next = this.peek();
+
+        if (next == '') {
+            return this.error('Unexpected end of input');
+        }
+
+        if (next == '"') {
+            this.consume();
+            break;
+        }
+
+        if (next == '\\') {
+            this.consume();
+
+            if (this.peek() == '"') {
+                this.consume();
+                str += '"';
+            } else {
+                str += '\\';
+            }
+        }
+    }
+
+    // wrap in object to make strings distinct from symbols
+    return new String(str);
+}
+
 function atom() {
+    if (this.peek() == '"') {
+        return this.string();
+    }
+
     return this.until(whitespace_or_paren);
 }
 
-function atomOrExpr() {
-    if (this.peek() == '\'') {
-        this.consume();
-        // ignore whitespace
-        this.until(not_whitespace_or_end);
-        var quotedExpr = this.atomOrExpr();
+function quoted() {
+    this.consume();
 
-        if (quotedExpr instanceof Error) {
-            return quotedExpr;
-        }
+    // ignore whitespace
+    this.until(not_whitespace_or_end);
+    var quotedExpr = this.expr();
 
-        if (quotedExpr instanceof Array) {
-            quotedExpr.unshift('quote');
-            return quotedExpr;
-        }
-
-        // nothing came after '
-        if (quotedExpr === '') {
-            return this.error('Unexpected `' + this.peek() + '` after `\'`');
-        }
-
-        return ['quote', quotedExpr];
+    if (quotedExpr instanceof Error) {
+        return quotedExpr;
     }
 
-    return this.peek() == '(' ? this.expr() : this.atom();
+    if (quotedExpr instanceof Array) {
+        quotedExpr.unshift('quote');
+        return quotedExpr;
+    }
+
+    // nothing came after '
+    if (quotedExpr === '') {
+        return this.error('Unexpected `' + this.peek() + '` after `\'`');
+    }
+
+    return ['quote', quotedExpr];
 }
 
 function expr() {
+    // ignore whitespace
+    this.until(not_whitespace_or_end);
+
+    if (this.peek() == '\'') {
+        return this.quoted();
+    }
+
+    var expr = this.peek() == '(' ? this.list() : this.atom();
+
+    // ignore whitespace
+    this.until(not_whitespace_or_end);
+
+    return expr;
+}
+
+function list() {
     if (this.peek() != '(') {
         return this.error('Expected `(` - saw `' + this.peek() + '` instead.');
     }
 
     this.consume();
 
-    // ignore whitespace
-    this.until(not_whitespace_or_end);
-
     var ls = [];
-    var v = this.atomOrExpr();
+    var v = this.expr();
 
     if (v instanceof Error) {
         return v;
@@ -128,12 +180,9 @@ function expr() {
     if (v !== '') {
         ls.push(v);
 
-        this.until(not_whitespace_or_end); // <=> while whitespace
-
-        while ((v = this.atomOrExpr()) !== '') {
+        while ((v = this.expr()) !== '') {
             if (v instanceof Error) return v;
             ls.push(v);
-            this.until(not_whitespace_or_end);
         }
     }
 
