@@ -32,10 +32,15 @@ module.exports = function SParse(stream) {
     return expression;
 };
 
-function peek(n) {
-    n = n || 1;
+function error(msg) {
+    var e = new Error('Syntax error: ' + msg);
+    e.line = this._line + 1;
+    e.col  = this._col + 1;
+    return e;
+}
+
+function peek() {
     if (this._stream.length == this._pos) return '';
-    if (n == 1) return this._stream[this._pos];
     return this._stream[this._pos];
 }
 
@@ -45,7 +50,14 @@ function consume() {
     var c = this._stream[this._pos];
     this._pos += 1;
 
-    if (c == '\n' || c == '\r') {
+    if (c == '\r') {
+        if (this.peek() == '\n') {
+            this._pos += 1;
+            c += '\n';
+        }
+        this._line++;
+        this._col = 0;
+    } else if (c == '\n') {
         this._line++;
         this._col = 0;
     } else {
@@ -63,13 +75,6 @@ function until(regex) {
     }
 
     return s;
-}
-
-function error(msg) {
-    var e = new Error('Syntax error: ' + msg);
-    e.line = this._line;
-    e.col  = this._col;
-    return e;
 }
 
 function atom() {
