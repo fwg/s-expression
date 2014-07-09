@@ -91,7 +91,7 @@ function string() {
         var next = this.peek();
 
         if (next == '') {
-            return this.error('Unexpected end of input');
+            return this.error('Unterminated string literal');
         }
 
         if (next == '"') {

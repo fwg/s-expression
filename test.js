@@ -31,5 +31,9 @@ assert.deepEqual(SParse('(a "\\"\n")'), ['a', new String('"\n')], 'Escaped doubl
 assert(SParse('(a "string)') instanceof Error, 'Prematurely ending strings should produce an error');
 assert(SParse('\'"string"', ['quote', new String('string')], 'A quoted string should parse'));
 
+error = SParse("(\"a)");
+assert(error instanceof Error);
+assert(error.message == "Syntax error: Unterminated string literal");
+
 assert.deepEqual(SParse('  a   '), 'a', 'Whitespace should be ignored');
-assert.deepEqual(SParse('    '), '', 'The empty expression should parse')
+assert.deepEqual(SParse('    '), '', 'The empty expression should parse');
