@@ -1,8 +1,12 @@
 S-expression parser
 ===================
 
-Recursive descent parser for simple S-expressions. Returns a nested
-array of the list-like expressions. Supports quoting with `'`.
+Recursive descent parser for simple S-expressions. Lists are parsed to arrays.
+Atoms are parsed as strings. String literals delimited by `"` are parsed into
+`String` objects to make them distinct from the other atoms.
+
+Supports quoting with `'`. This just puts `'quote'` at the head of the
+following expression.
 
 ### Syntax
 
