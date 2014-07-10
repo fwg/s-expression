@@ -101,10 +101,28 @@ function string() {
 
         if (next == '\\') {
             this.consume();
+            next = this.peek();
 
-            if (this.peek() == '"') {
+            if (next == '"') {
+                str += this.consume();
+            } else if (next == '\\') {
                 this.consume();
-                str += '"';
+                str += '\\';
+            } else if (next == 'r') {
+                this.consume();
+                str += '\r';
+            } else if (next == 't') {
+                this.consume();
+                str += '\t';
+            } else if (next == 'n') {
+                this.consume();
+                str += '\n';
+            } else if (next == 'f') {
+                this.consume();
+                str += '\f';
+            } else if (next == 'b') {
+                this.consume();
+                str += '\b';
             } else {
                 str += '\\';
             }
