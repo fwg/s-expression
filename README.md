@@ -19,7 +19,8 @@ is a syntax error. The PEG looks like this:
     Atom       <- String / Symbol
     List       <- '(' Expr* ')'
     String     <- '"' ('\\"' / (Char !'"'))* '"'
-    Symbol     <- (Char !(Space / '(' / ')'))+
+    Symbol     <- SymbolChar+
+    SymbolChar <- '\\"' / '\\\'' / (Char !(Space / '(' / ')' / '\'' / '"'))
     Char       <- any character
     Space      <- any whitespace character in JavaScript
 

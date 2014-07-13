@@ -1,5 +1,6 @@
+'use strict';
 var not_whitespace_or_end = /^(\S|$)/;
-var whitespace_or_paren = /^(\s|\(|\)|$)/;
+var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|\(|\)|$)/;
 var string_or_escaped_or_end = /^(\\|"|$)/;
 
 function SParser(stream) {
@@ -34,6 +35,8 @@ module.exports = function SParse(stream) {
 
     return expression;
 };
+
+module.exports.SyntaxError = Error;
 
 function error(msg) {
     var e = new Error('Syntax error: ' + msg);
@@ -103,12 +106,7 @@ function string() {
             this.consume();
             next = this.peek();
 
-            if (next == '"') {
-                str += this.consume();
-            } else if (next == '\\') {
-                this.consume();
-                str += '\\';
-            } else if (next == 'r') {
+            if (next == 'r') {
                 this.consume();
                 str += '\r';
             } else if (next == 't') {
@@ -124,7 +122,7 @@ function string() {
                 this.consume();
                 str += '\b';
             } else {
-                str += '\\';
+                str += this.consume();
             }
         }
     }
@@ -138,7 +136,22 @@ function atom() {
         return this.string();
     }
 
-    return this.until(whitespace_or_paren);
+    var atom = '';
+
+    while (true) {
+        atom += this.until(space_quote_paren_escaped_or_end);
+        var next = this.peek();
+
+        if (next == '\\') {
+            this.consume();
+            atom += this.consume();
+            continue;
+        }
+
+        break;
+    }
+
+    return atom;
 }
 
 function quoted() {
@@ -152,14 +165,14 @@ function quoted() {
         return quotedExpr;
     }
 
-    if (quotedExpr instanceof Array) {
-        quotedExpr.unshift('quote');
-        return quotedExpr;
-    }
-
     // nothing came after '
     if (quotedExpr === '') {
         return this.error('Unexpected `' + this.peek() + '` after `\'`');
+    }
+
+    if (quotedExpr instanceof Array && quotedExpr[0] !== 'quote') {
+        quotedExpr.unshift('quote');
+        return quotedExpr;
     }
 
     return ['quote', quotedExpr];
