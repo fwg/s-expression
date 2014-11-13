@@ -2,6 +2,7 @@
 var not_whitespace_or_end = /^(\S|$)/;
 var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|\(|\)|$)/;
 var string_or_escaped_or_end = /^(\\|"|$)/;
+var quotes = /('|`)/
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
@@ -155,7 +156,8 @@ function atom() {
 }
 
 function quoted() {
-    this.consume();
+    var q = this.consume();
+    var quote = q == '`' ? 'quasiquote' : 'quote';
 
     // ignore whitespace
     this.until(not_whitespace_or_end);
@@ -167,22 +169,22 @@ function quoted() {
 
     // nothing came after '
     if (quotedExpr === '') {
-        return this.error('Unexpected `' + this.peek() + '` after `\'`');
+        return this.error('Unexpected `' + this.peek() + '` after `' + q + '`');
     }
 
-    if (quotedExpr instanceof Array && quotedExpr[0] !== 'quote') {
-        quotedExpr.unshift('quote');
+    if (quotedExpr instanceof Array && quotedExpr[0] !== quote) {
+        quotedExpr.unshift(quote);
         return quotedExpr;
     }
 
-    return ['quote', quotedExpr];
+    return [quote, quotedExpr];
 }
 
 function expr() {
     // ignore whitespace
     this.until(not_whitespace_or_end);
 
-    if (this.peek() == '\'') {
+    if (quotes.test(this.peek())) {
         return this.quoted();
     }
 
