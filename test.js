@@ -12,6 +12,10 @@ assert.deepEqual(SParse("((a `b `c))"), [['a',['quasiquote','b'],['quasiquote','
 assert.deepEqual(SParse("(a `(a b c))"), ['a', ['quasiquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a ` (a b c))"), ['a', ['quasiquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a `` (a b c))"), ['a', ['quasiquote', ['quasiquote', 'a', 'b', 'c']]], 'Multiple quasiquotes should not be flattened');
+assert.deepEqual(SParse("((a ,b ,c))"), [['a',['unquote','b'],['unquote','c']]]);
+assert.deepEqual(SParse("(a ,(a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
+assert.deepEqual(SParse("(a , (a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
+assert.deepEqual(SParse("(a ,, (a b c))"), ['a', ['unquote', ['unquote', 'a', 'b', 'c']]], 'Multiple unquotes should not be flattened');
 assert(SParse("()()") instanceof SyntaxError, 'Any character after a complete expression should be an error');
 assert(SParse("((a) b))") instanceof SyntaxError, 'Any character after a complete expression should be an error');
 assert(SParse("((a))abc") instanceof SyntaxError, 'Any character after a complete expression should be an error');

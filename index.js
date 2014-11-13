@@ -2,7 +2,12 @@
 var not_whitespace_or_end = /^(\S|$)/;
 var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|\(|\)|$)/;
 var string_or_escaped_or_end = /^(\\|"|$)/;
-var quotes = /('|`)/
+var quotes = /('|`|,)/;
+var quotes_map = {
+    '\'': 'quote',
+    '`':  'quasiquote',
+    ',':  'unquote'
+};
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
@@ -157,7 +162,7 @@ function atom() {
 
 function quoted() {
     var q = this.consume();
-    var quote = q == '`' ? 'quasiquote' : 'quote';
+    var quote = quotes_map[q];
 
     // ignore whitespace
     this.until(not_whitespace_or_end);
