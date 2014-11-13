@@ -1,18 +1,21 @@
 {
   "name": "s-expression",
-  "version": "2.4.0",
-  "description": "s-expression parser with ' quote support",
+  "version": "2.5.0",
+  "description": "s-expression parser with (un|quasi|)quoting support",
   "main": "index.js",
   "scripts": {
-      "test": "node test.js"
+    "test": "node test.js"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/fwg/s-expression.git"
+    "type": "git",
+    "url": "https://github.com/fwg/s-expression.git"
   },
   "author": {
-      "name": "Friedemann Altrock",
-      "email": "frodenius@gmail.com"
+    "name": "Friedemann Altrock",
+    "email": "frodenius@gmail.com"
   },
+  "contributors": [
+    {"name": "Matt Brennan", "email": "mattyb1000@gmail.com"}
+  ],
   "license": "MIT"
 }
