@@ -23,15 +23,16 @@ SParser.prototype = {
     atom: atom,
     quoted: quoted,
     expr: expr,
-    list: list
+    list: list,
+    bareList: bareList
 };
 
 module.exports = function SParse(stream) {
     var parser = new SParser(stream);
-    var expression = parser.expr();
+    var ls = parser.bareList();
 
-    if (expression instanceof Error) {
-        return expression;
+    if (ls instanceof Error) {
+        return ls;
     }
 
     // if anything is left to parse, it's a syntax error
@@ -39,7 +40,7 @@ module.exports = function SParse(stream) {
         return parser.error('Superfluous characters after expression: `' + parser.peek() + '`');
     }
 
-    return expression;
+    return ls.length == 0 ? '' : ls.length == 1 ? ls[0] : ls;
 };
 
 module.exports.SyntaxError = Error;
@@ -207,7 +208,23 @@ function list() {
     }
 
     this.consume();
+    var ls = this.bareList();
 
+    if(ls instanceof Error) {
+        return ls;
+    }
+
+    if (this.peek() != ')') {
+        return this.error('Expected `)` - saw: `' + this.peek() + '`');
+    }
+
+    // consume that closing paren
+    this.consume();
+
+    return ls;
+}
+
+function bareList() {
     var ls = [];
     var v = this.expr();
 
@@ -223,13 +240,6 @@ function list() {
             ls.push(v);
         }
     }
-
-    if (this.peek() != ')') {
-        return this.error('Expected `)` - saw: `' + this.peek() + '`');
-    }
-
-    // consume that closing paren
-    this.consume();
 
     return ls;
 }

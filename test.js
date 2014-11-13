@@ -16,9 +16,7 @@ assert.deepEqual(SParse("((a ,b ,c))"), [['a',['unquote','b'],['unquote','c']]])
 assert.deepEqual(SParse("(a ,(a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a , (a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a ,, (a b c))"), ['a', ['unquote', ['unquote', 'a', 'b', 'c']]], 'Multiple unquotes should not be flattened');
-assert(SParse("()()") instanceof SyntaxError, 'Any character after a complete expression should be an error');
-assert(SParse("((a) b))") instanceof SyntaxError, 'Any character after a complete expression should be an error');
-assert(SParse("((a))abc") instanceof SyntaxError, 'Any character after a complete expression should be an error');
+assert(SParse("((a) b))") instanceof SyntaxError, 'Unbalanced parens should be an error');
 assert(SParse("(')") instanceof SyntaxError, 'A \' without anything to quote should be an error');
 assert.deepEqual(SParse("'()"), ['quote'], 'A quoted empty list should parse');
 assert.deepEqual(SParse("()"), [], 'An empty list should parse');
@@ -29,6 +27,11 @@ assert.deepEqual(SParse("(a\\'b)"), ['a\'b'], 'Escaped quotes in symbols should 
 assert.deepEqual(SParse("(a\\\"b)"), ['a\"b'], 'Escaped quotes in symbols should parse');
 assert.deepEqual(SParse("(a\\\\b)"), ['a\\b'], 'Escaped \\ in symbols should parse as \\');
 assert.deepEqual(SParse("(a\\b)"), ['ab'], 'Escaped normal characters in symbols should parse as normal');
+
+assert.deepEqual(SParse("(a)(b)"), [['a'], ['b']]);
+assert.deepEqual(SParse("(a)    (b)"), [['a'], ['b']]);
+assert.deepEqual(SParse("(a) abc"), [['a'], 'abc']);
+assert(SParse("(a) (") instanceof SyntaxError);
 
 var error = SParse("(\n'");
 assert(error instanceof SyntaxError, "Parsing (\\n' Should be an error");
