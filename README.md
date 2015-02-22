@@ -6,7 +6,8 @@ Atoms are parsed as strings. String literals delimited by `"` are parsed into
 `String` objects to make them distinct from the other atoms. Escape sequences
 `\"`, `\\`, `\n`, `\r`, `\t`, `\f`, and `\b` are supported.
 
-Supports quote, quasiquote and unquote, with `'`, `` ` `` and `,`.
+Supports quote, quasiquote, unquote and unquote-splicing, with `'`, `` ` ``,
+`,` and `,@`.
 
 ### Syntax
 
@@ -14,7 +15,7 @@ The parser reads one expression. Anything after the first complete expression
 is a syntax error. The PEG looks like this:
 
     Expr       <- Space* Expr Space* / Quoted / Atom / List
-    Quoted     <- ('\'' / '`' / ',') Expr
+    Quoted     <- ('\'' / '`' / ',' / ',@') Expr
     Atom       <- String / Symbol
     List       <- '(' Expr* ')'
     String     <- '"' ('\\"' / (Char !'"'))* '"'
@@ -35,6 +36,7 @@ is a syntax error. The PEG looks like this:
     console.log(Parse("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
     console.log(Parse("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
     console.log(Parse("(a `(b ,c))")); // ['a', ['quasiquote', 'b', ['unquote', 'c']]]
+    console.log(Parse("(a `(b ,@c))")); // ['a', ['quasiquote', 'b', ['unquoteSplicing', 'c']]]
 
 
 #### License
