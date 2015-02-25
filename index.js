@@ -1,13 +1,15 @@
 'use strict';
+
 var not_whitespace_or_end = /^(\S|$)/;
-var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|\(|\)|$)/;
+var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|`|,|\(|\)|$)/;
 var string_or_escaped_or_end = /^(\\|"|$)/;
 var quotes = /('|`|,)/;
 var quotes_map = {
-    '\'': 'quote',
-    '`':  'quasiquote',
-    ',':  'unquote'
+    "'": 'quote',
+    '`': 'quasiquote',
+    ',': 'unquote'
 };
+module.exports.supportedQuotes = "'`,".split('');
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
