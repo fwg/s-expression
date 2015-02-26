@@ -7,9 +7,10 @@ var quotes = /('|`|,)/;
 var quotes_map = {
     "'": 'quote',
     '`': 'quasiquote',
-    ',': 'unquote'
+    ',': 'unquote',
+    ',@': 'unquote-splicing'
 };
-module.exports.supportedQuotes = "'`,".split('');
+module.exports.supportedQuotes = Object.keys(quotes_map);
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
@@ -164,6 +165,11 @@ function atom() {
 
 function quoted() {
     var q = this.consume();
+
+    if (q == ',' && this.peek() == '@') {
+        q += this.consume();
+    }
+
     var quote = quotes_map[q];
 
     // ignore whitespace

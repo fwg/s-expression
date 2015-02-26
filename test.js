@@ -61,6 +61,9 @@ if (!options['-unquote']) {
 if (!options['-quasiquote']) {
     testQuote('`', 'quasiquote');
 }
+if (!options['-unquote-splicing']) {
+    testQuote(',@', 'unquote-splicing');
+}
 
 // invalid expressions
 if (!options['-error'] && SyntaxError) {
