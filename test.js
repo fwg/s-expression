@@ -16,10 +16,10 @@ assert.deepEqual(SParse("((a ,b ,c))"), [['a',['unquote','b'],['unquote','c']]])
 assert.deepEqual(SParse("(a ,(a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a , (a b c))"), ['a', ['unquote', 'a', 'b', 'c']]);
 assert.deepEqual(SParse("(a ,, (a b c))"), ['a', ['unquote', ['unquote', 'a', 'b', 'c']]], 'Multiple unquotes should not be flattened');
-assert.deepEqual(SParse("((a ,@b ,@c))"), [['a',['unquoteSplicing','b'],['unquoteSplicing','c']]]);
-assert.deepEqual(SParse("(a ,@(a b c))"), ['a', ['unquoteSplicing', 'a', 'b', 'c']]);
-assert.deepEqual(SParse("(a ,@ (a b c))"), ['a', ['unquoteSplicing', 'a', 'b', 'c']]);
-assert.deepEqual(SParse("(a ,@,@ (a b c))"), ['a', ['unquoteSplicing', ['unquoteSplicing', 'a', 'b', 'c']]], 'Multiple unquoteSplicings should not be flattened');
+assert.deepEqual(SParse("((a ,@b ,@c))"), [['a',['unquote-splicing','b'],['unquote-splicing','c']]]);
+assert.deepEqual(SParse("(a ,@(a b c))"), ['a', ['unquote-splicing', 'a', 'b', 'c']]);
+assert.deepEqual(SParse("(a ,@ (a b c))"), ['a', ['unquote-splicing', 'a', 'b', 'c']]);
+assert.deepEqual(SParse("(a ,@,@ (a b c))"), ['a', ['unquote-splicing', ['unquote-splicing', 'a', 'b', 'c']]], 'Multiple unquote-splicings should not be flattened');
 assert(SParse("()()") instanceof SyntaxError, 'Any character after a complete expression should be an error');
 assert(SParse("((a) b))") instanceof SyntaxError, 'Any character after a complete expression should be an error');
 assert(SParse("((a))abc") instanceof SyntaxError, 'Any character after a complete expression should be an error');

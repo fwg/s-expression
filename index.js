@@ -166,7 +166,7 @@ function quoted() {
 
     if (quote == "unquote" && this.peek() == "@") {
         this.consume();
-        quote = "unquoteSplicing";
+        quote = "unquote-splicing";
     }
 
     // ignore whitespace

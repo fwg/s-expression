@@ -36,7 +36,7 @@ is a syntax error. The PEG looks like this:
     console.log(Parse("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
     console.log(Parse("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
     console.log(Parse("(a `(b ,c))")); // ['a', ['quasiquote', 'b', ['unquote', 'c']]]
-    console.log(Parse("(a `(b ,@c))")); // ['a', ['quasiquote', 'b', ['unquoteSplicing', 'c']]]
+    console.log(Parse("(a `(b ,@c))")); // ['a', ['quasiquote', 'b', ['unquote-splicing', 'c']]]
 
 
 #### License
