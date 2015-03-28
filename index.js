@@ -164,6 +164,11 @@ function quoted() {
     var q = this.consume();
     var quote = quotes_map[q];
 
+    if (quote == "unquote" && this.peek() == "@") {
+        this.consume();
+        quote = "unquote-splicing";
+    }
+
     // ignore whitespace
     this.until(not_whitespace_or_end);
     var quotedExpr = this.expr();
