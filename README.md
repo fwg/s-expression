@@ -34,9 +34,9 @@ is a syntax error. The PEG looks like this:
     console.log(Parse('()')); // []
     console.log(Parse('(a b c)')); // ['a', 'b', 'c']
     console.log(Parse("(a 'b 'c)")); // ['a', ['quote' 'b'], ['quote', 'c']]
-    console.log(Parse("(a '(b c))")); // ['a', ['quote', 'b', 'c']]
-    console.log(Parse("(a `(b ,c))")); // ['a', ['quasiquote', 'b', ['unquote', 'c']]]
-    console.log(Parse("(a `(b ,@c))")); // ['a', ['quasiquote', 'b', ['unquote-splicing', 'c']]]
+    console.log(Parse("(a '(b c))")); // ['a', ['quote', ['b', 'c']]]
+    console.log(Parse("(a `(b ,c))")); // ['a', ['quasiquote', ['b', ['unquote', 'c']]]]
+    console.log(Parse("(a `(b ,@c))")); // ['a', ['quasiquote', ['b', ['unquote-splicing', 'c']]]]
 
 
 #### License
