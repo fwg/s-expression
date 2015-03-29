@@ -182,11 +182,6 @@ function quoted() {
         return this.error('Unexpected `' + this.peek() + '` after `' + q + '`');
     }
 
-    if (quotedExpr instanceof Array && quotedExpr[0] !== quote) {
-        quotedExpr.unshift(quote);
-        return quotedExpr;
-    }
-
     return [quote, quotedExpr];
 }
 
