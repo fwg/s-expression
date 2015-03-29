@@ -15,7 +15,8 @@
     "email": "frodenius@gmail.com"
   },
   "contributors": [
-    {"name": "Matt Brennan", "email": "mattyb1000@gmail.com"}
+    {"name": "Matt Brennan", "email": "mattyb1000@gmail.com"},
+    {"name": "An", "email": "an@cyan.io"}
   ],
   "license": "MIT"
 }
