@@ -15,8 +15,17 @@
     "email": "frodenius@gmail.com"
   },
   "contributors": [
-    {"name": "Matt Brennan", "email": "mattyb1000@gmail.com"},
-    {"name": "An", "email": "an@cyan.io"}
+    {
+      "name": "Matt Brennan",
+      "email": "mattyb1000@gmail.com"
+    },
+    {
+      "name": "An",
+      "email": "an@cyan.io"
+    }
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "parsimmon": "^0.7.0"
+  }
 }

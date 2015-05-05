@@ -1,235 +1,72 @@
 'use strict';
-var not_whitespace_or_end = /^(\S|$)/;
-var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|`|,|\(|\)|$)/;
-var string_or_escaped_or_end = /^(\\|"|$)/;
-var quotes = /('|`|,)/;
-var quotes_map = {
-    '\'': 'quote',
-    '`':  'quasiquote',
-    ',':  'unquote'
-};
+var Parsimmon = require("parsimmon");
+var regex = Parsimmon.regex;
+var string = Parsimmon.string;
+var optWhitespace = Parsimmon.optWhitespace;
+var lazy = Parsimmon.lazy;
+var seq = Parsimmon.seq;
+var alt = Parsimmon.alt;
 
-function SParser(stream) {
-    this._line = this._col = this._pos = 0;
-    this._stream = stream;
-}
+var lexeme = function(p) { return p.skip(optWhitespace); };
 
-SParser.prototype = {
-    peek: peek,
-    consume: consume,
-    until: until,
-    error: error,
-    string: string,
-    atom: atom,
-    quoted: quoted,
-    expr: expr,
-    list: list
-};
+var number = lexeme(regex(/[0-9]+/).map(parseInt)).desc("number");
 
-module.exports = function SParse(stream) {
-    var parser = new SParser(stream);
-    var expression = parser.expr();
+var stringLiteral = lexeme((function() {
+    var escapedChar = string("\\").then(regex(/["\\]/));
+    var normalChar = string("\\").atMost(1).then(regex(/[^"\\]/));
+    return string('"').desc("string-opener")
+        .then(normalChar.or(escapedChar).desc("string content").many())
+        .skip(string('"').desc("string-terminator"))
+        .map(function(s) { return new String(s.join("")); });
+})());
 
-    if (expression instanceof Error) {
-        return expression;
+var atom = lexeme((function() {
+    var escapedChar = string('\\').then(regex(/['"\\]/));
+    var initialChar = regex(/[a-z_]/i);
+    var normalChar  = string('\\').atMost(1).then(regex(/\w/i));
+    return seq(initialChar, normalChar.or(escapedChar).many())
+        .map(function(d) {
+            return d[0] + (d[1] ? d[1].join("") : "");
+        }).desc("atom");
+})());
+
+var lparen = lexeme(string('(')).desc("opening paren");
+var rparen = lexeme(string(')')).desc("closing paren");
+var expr = lazy("sexpr", function() { return alt(form, atom, quotedExpr); });
+
+var quote  = lexeme(regex(/('|`|,@|,)/)).desc("a quote");
+var quotedExpr = quote.chain(function(quoteResult) {
+
+    var quoteMap = {
+        '\'' : 'quote',
+        '`'  : 'quasiquote',
+        ','  : 'unquote',
+        ',@' : 'unquote-splicing'
     }
 
-    // if anything is left to parse, it's a syntax error
-    if (parser.peek() != '') {
-        return parser.error('Superfluous characters after expression: `' + parser.peek() + '`');
+    return expr.map(function(exprResult) {
+        return [ quoteMap[quoteResult] , exprResult ];
+    });
+});
+var atom = number.or(atom).or(stringLiteral);
+var form = lparen.then(expr.many()).skip(rparen);
+
+module.exports = function(stream) {
+    var s = optWhitespace.then(expr.or(optWhitespace)).parse(stream);
+    if (s.status) return s.value;
+    else {
+
+        var streamSoFar = stream.slice(0, s.index);
+        var line = 1 + (streamSoFar.match(/\n/g) || []).length; // Count '\n's
+        var col = streamSoFar.length - streamSoFar.lastIndexOf("\n");
+
+        var e = new Error("Syntax error at position " + s.index + ": " +
+                          "(expected " + s.expected.join(" or ") + ")");
+        if (s.expected.indexOf("string-terminator") >= 0)
+            e.message = "Syntax error: Unterminated string literal";
+        e.line = line;
+        e.col = col;
+        return e;
     }
-
-    return expression;
 };
-
 module.exports.SyntaxError = Error;
-
-function error(msg) {
-    var e = new Error('Syntax error: ' + msg);
-    e.line = this._line + 1;
-    e.col  = this._col + 1;
-    return e;
-}
-
-function peek() {
-    if (this._stream.length == this._pos) return '';
-    return this._stream[this._pos];
-}
-
-function consume() {
-    if (this._stream.length == this._pos) return '';
-
-    var c = this._stream[this._pos];
-    this._pos += 1;
-
-    if (c == '\r') {
-        if (this.peek() == '\n') {
-            this._pos += 1;
-            c += '\n';
-        }
-        this._line++;
-        this._col = 0;
-    } else if (c == '\n') {
-        this._line++;
-        this._col = 0;
-    } else {
-        this._col++;
-    }
-
-    return c;
-}
-
-function until(regex) {
-    var s = '';
-
-    while (!regex.test(this.peek())) {
-        s += this.consume();
-    }
-
-    return s;
-}
-
-function string() {
-    // consume "
-    this.consume();
-
-    var str = '';
-
-    while (true) {
-        str += this.until(string_or_escaped_or_end);
-        var next = this.peek();
-
-        if (next == '') {
-            return this.error('Unterminated string literal');
-        }
-
-        if (next == '"') {
-            this.consume();
-            break;
-        }
-
-        if (next == '\\') {
-            this.consume();
-            next = this.peek();
-
-            if (next == 'r') {
-                this.consume();
-                str += '\r';
-            } else if (next == 't') {
-                this.consume();
-                str += '\t';
-            } else if (next == 'n') {
-                this.consume();
-                str += '\n';
-            } else if (next == 'f') {
-                this.consume();
-                str += '\f';
-            } else if (next == 'b') {
-                this.consume();
-                str += '\b';
-            } else {
-                str += this.consume();
-            }
-        }
-    }
-
-    // wrap in object to make strings distinct from symbols
-    return new String(str);
-}
-
-function atom() {
-    if (this.peek() == '"') {
-        return this.string();
-    }
-
-    var atom = '';
-
-    while (true) {
-        atom += this.until(space_quote_paren_escaped_or_end);
-        var next = this.peek();
-
-        if (next == '\\') {
-            this.consume();
-            atom += this.consume();
-            continue;
-        }
-
-        break;
-    }
-
-    return atom;
-}
-
-function quoted() {
-    var q = this.consume();
-    var quote = quotes_map[q];
-
-    if (quote == "unquote" && this.peek() == "@") {
-        this.consume();
-        quote = "unquote-splicing";
-    }
-
-    // ignore whitespace
-    this.until(not_whitespace_or_end);
-    var quotedExpr = this.expr();
-
-    if (quotedExpr instanceof Error) {
-        return quotedExpr;
-    }
-
-    // nothing came after '
-    if (quotedExpr === '') {
-        return this.error('Unexpected `' + this.peek() + '` after `' + q + '`');
-    }
-
-    return [quote, quotedExpr];
-}
-
-function expr() {
-    // ignore whitespace
-    this.until(not_whitespace_or_end);
-
-    if (quotes.test(this.peek())) {
-        return this.quoted();
-    }
-
-    var expr = this.peek() == '(' ? this.list() : this.atom();
-
-    // ignore whitespace
-    this.until(not_whitespace_or_end);
-
-    return expr;
-}
-
-function list() {
-    if (this.peek() != '(') {
-        return this.error('Expected `(` - saw `' + this.peek() + '` instead.');
-    }
-
-    this.consume();
-
-    var ls = [];
-    var v = this.expr();
-
-    if (v instanceof Error) {
-        return v;
-    }
-
-    if (v !== '') {
-        ls.push(v);
-
-        while ((v = this.expr()) !== '') {
-            if (v instanceof Error) return v;
-            ls.push(v);
-        }
-    }
-
-    if (this.peek() != ')') {
-        return this.error('Expected `)` - saw: `' + this.peek() + '`');
-    }
-
-    // consume that closing paren
-    this.consume();
-
-    return ls;
-}

@@ -33,8 +33,8 @@ assert.deepEqual(SParse("(a'b)"), ['a', ['quote', 'b']], 'Quote should act symbo
 assert.deepEqual(SParse("(a`b)"), ['a', ['quasiquote', 'b']], 'Quasiquote should act symbol delimiting');
 assert.deepEqual(SParse("(a,b)"), [ 'a', ['unquote', 'b']], 'Unquote should act symbol delimiting');
 assert.deepEqual(SParse("(a,@b)"), ['a', ['unquote-splicing', 'b']], 'Unquote-splicing should act symbol delimiting');
-assert.deepEqual(SParse("(a\\'b)"), ['a\'b'], 'Escaped quotes in symbols should parse');
-assert.deepEqual(SParse("(a\\\"b)"), ['a\"b'], 'Escaped quotes in symbols should parse');
+assert.deepEqual(SParse("(a\\'b)"), ['a\'b'], 'Escaped single quotes in symbols should parse');
+assert.deepEqual(SParse("(a\\\"b)"), ['a\"b'], 'Escaped double quotes in symbols should parse');
 assert.deepEqual(SParse("(a\\\\b)"), ['a\\b'], 'Escaped \\ in symbols should parse as \\');
 assert.deepEqual(SParse("(a\\b)"), ['ab'], 'Escaped normal characters in symbols should parse as normal');
 
