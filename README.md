@@ -7,7 +7,9 @@ returns the value that corresponds to one complete expression, or an `Error`.
 Atoms are parsed to strings. String literals delimited by `"` are parsed into 
 `String` objects to make them distinct from the other atoms. Escape sequences 
 `\"`, `\\`, `\n`, `\r`, `\t`, `\f`, and `\b` are supported. Lists are parsed 
-to `Array`s. Note this means that the result is not a binary tree. 
+to `Array`s. Note this means that the result is not a binary tree. This also
+means there are no pairs or cons cells, and the expression `(a . b)` is parsed
+to `['a', '.', 'b']`.
 
 Supports `quote`, `quasiquote`, `unquote`, and `unquote-splicing`, with `'`, `` ` ``,
 `,`, and `,@` respectively.
@@ -47,8 +49,6 @@ one-file parser without dependencies that is not too hard to understand.
 
 This software is licensed under MIT, see `LICENSE`.
 
-
-## References
 
 [1]: https://en.wikipedia.org/wiki/Recursive_descent_parser "Recursive descent parser"
 [2]: https://en.wikipedia.org/wiki/S-expression "S-expressions"
