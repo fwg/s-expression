@@ -63,3 +63,11 @@ assert(error.message == "Syntax error: Unterminated string literal", error.messa
 
 assert.deepEqual(SParse('  a   '), 'a', 'Whitespace should be ignored');
 assert.deepEqual(SParse('    '), '', 'The empty expression should parse');
+
+SParse.Parser.string_delimiters = /['"]/;
+SParse.Parser.string_or_escaped_or_end = /^(\\|"|'|$)/;
+SParse.Parser.quotes = /[`,]/;
+delete SParse.Parser.quotes_map["'"];
+
+assert.deepEqual(SParse("'abc'"), new String('abc'), 'String delimiters should be modifiable');
+assert.deepEqual(SParse("('abc\"def' \"123'\")"), [new String('abc"def'), new String("123'")], 'Multiple string delimiters should not influence each other');

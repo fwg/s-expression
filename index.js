@@ -1,18 +1,20 @@
 'use strict';
-var not_whitespace_or_end = /^(\S|$)/;
-var space_quote_paren_escaped_or_end = /^(\s|\\|"|'|`|,|\(|\)|$)/;
-var string_or_escaped_or_end = /^(\\|"|$)/;
-var quotes = /('|`|,)/;
-var quotes_map = {
-    '\'': 'quote',
-    '`':  'quasiquote',
-    ',':  'unquote'
-};
 
 function SParser(stream) {
     this._line = this._col = this._pos = 0;
     this._stream = stream;
 }
+
+SParser.not_whitespace_or_end = /^(\S|$)/;
+SParser.space_quote_paren_escaped_or_end = /^(\s|\\|"|'|`|,|\(|\)|$)/;
+SParser.string_or_escaped_or_end = /^(\\|"|$)/;
+SParser.string_delimiters = /["]/;
+SParser.quotes = /['`,]/;
+SParser.quotes_map = {
+    '\'': 'quote',
+    '`':  'quasiquote',
+    ',':  'unquote'
+};
 
 SParser.prototype = {
     peek: peek,
@@ -27,7 +29,7 @@ SParser.prototype = {
 };
 
 module.exports = function SParse(stream) {
-    var parser = new SParser(stream);
+    var parser = new SParse.Parser(stream);
     var expression = parser.expr();
 
     if (expression instanceof Error) {
@@ -42,6 +44,7 @@ module.exports = function SParse(stream) {
     return expression;
 };
 
+module.exports.Parser = SParser;
 module.exports.SyntaxError = Error;
 
 function error(msg) {
@@ -91,19 +94,19 @@ function until(regex) {
 
 function string() {
     // consume "
-    this.consume();
+    var delimiter = this.consume();
 
     var str = '';
 
     while (true) {
-        str += this.until(string_or_escaped_or_end);
+        str += this.until(SParser.string_or_escaped_or_end);
         var next = this.peek();
 
         if (next == '') {
             return this.error('Unterminated string literal');
         }
 
-        if (next == '"') {
+        if (next == delimiter) {
             this.consume();
             break;
         }
@@ -130,7 +133,11 @@ function string() {
             } else {
                 str += this.consume();
             }
+
+            continue;
         }
+
+        str += this.consume();
     }
 
     // wrap in object to make strings distinct from symbols
@@ -138,14 +145,14 @@ function string() {
 }
 
 function atom() {
-    if (this.peek() == '"') {
+    if (SParser.string_delimiters.test(this.peek())) {
         return this.string();
     }
 
     var atom = '';
 
     while (true) {
-        atom += this.until(space_quote_paren_escaped_or_end);
+        atom += this.until(SParser.space_quote_paren_escaped_or_end);
         var next = this.peek();
 
         if (next == '\\') {
@@ -162,7 +169,7 @@ function atom() {
 
 function quoted() {
     var q = this.consume();
-    var quote = quotes_map[q];
+    var quote = SParser.quotes_map[q];
 
     if (quote == "unquote" && this.peek() == "@") {
         this.consume();
@@ -171,7 +178,7 @@ function quoted() {
     }
 
     // ignore whitespace
-    this.until(not_whitespace_or_end);
+    this.until(SParser.not_whitespace_or_end);
     var quotedExpr = this.expr();
 
     if (quotedExpr instanceof Error) {
@@ -188,16 +195,16 @@ function quoted() {
 
 function expr() {
     // ignore whitespace
-    this.until(not_whitespace_or_end);
+    this.until(SParser.not_whitespace_or_end);
 
-    if (quotes.test(this.peek())) {
+    if (SParser.quotes.test(this.peek())) {
         return this.quoted();
     }
 
     var expr = this.peek() == '(' ? this.list() : this.atom();
 
     // ignore whitespace
-    this.until(not_whitespace_or_end);
+    this.until(SParser.not_whitespace_or_end);
 
     return expr;
 }
