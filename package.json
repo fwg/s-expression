@@ -1,6 +1,6 @@
 {
   "name": "s-expression",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "s-expression parser with (un|quasi|)quoting support",
   "main": "index.js",
   "scripts": {
